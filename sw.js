@@ -1,69 +1,55 @@
-const CACHE_NAME = 'tipi-v1'; // Cambia esta versión cuando actualices la app
+const CACHE_NAME = 'tipi-v1';          // Cambia esta versión al actualizar
 const ASSETS = [
-  '/', // raíz
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/js/gsap.min.js',
-  '/js/tsparticles.bundle.min.js',
-  // fuentes de Google (se cachean bajo demanda)
+  './',                                // raíz de /tipi-app/
+  './index.html',
+  './manifest.json',
+  './sw.js',
+  './icon-192.png',
+  './icon-512.png',
+  './js/gsap.min.js',
+  './js/tsparticles.bundle.min.js',
+  // fuente Google: se cacheará cuando la primera vez se solicite
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap'
 ];
 
-// Instalación: cachear todo lo esencial
-self.addEventListener('install', (event) => {
+// ---------- INSTALACIÓN ----------
+self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        // Agrega todos los assets definidos
-        return cache.addAll(ASSETS);
-      })
+      .then(cache => cache.addAll(ASSETS))
       .then(() => self.skipWaiting())
   );
 });
 
-// Activación: limpiar versiones antiguas si las hay
-self.addEventListener('activate', (event) => {
+// ---------- ACTIVACIÓN ----------
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(
-        keys
-          .filter(key => key !== CACHE_NAME)
-          .map(old => caches.delete(old))
-      );
-    }).then(() => self.clients.claim())
+    caches.keys().then(keys => Promise.all(
+      keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+    )).then(() => self.clients.claim())
   );
 });
 
-// Interceptar peticiones y responder desde cache o red
-self.addEventListener('fetch', (event) => {
+// ---------- FETCH ----------
+self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request, { ignoreSearch: true })
-      .then(cached => {
-        if (cached) {
-          return cached;
+    caches.match(event.request, { ignoreSearch: true }).then(cached => {
+      if (cached) return cached;
+
+      return fetch(event.request).then(response => {
+        // Solo cacheamos respuestas válidas (status 200 mismos origenes)
+        if (response && response.status === 200 && response.type === 'basic') {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
-        // Si no está en cache, lo trae de la red y lo guarda (cache dinámico)
-        return fetch(event.request)
-          .then(response => {
-            // Si es una respuesta válida, la clonamos y la guardamos para futuro
-            if (!response || response.status !== 200 || response.type === 'opaque') {
-              return response;
-            }
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(event.request, clone);
-            });
-            return response;
-          })
-          .catch(() => {
-            // Fallback: si falla y es navegación, retornar index.html (para que no rompa)
-            if (event.request.mode === 'navigate') {
-              return caches.match('/index.html');
-            }
-          });
-      })
+        return response;
+      }).catch(() => {
+        // Si la red falla y era navegación, servimos copia de index.html
+        if (event.request.mode === 'navigate') {
+          return caches.match('./index.html');
+        }
+      });
+    })
   );
-}
-);
+});
+
