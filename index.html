@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Test de Personalidad Profesional - TIPI</title>
+  <meta name="description" content="Test de personalidad Big Five (TIPI). Flujo por pantalla, animaciones profesionales, 10 preguntas en escala Likert.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" as="style" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:#0f111f;
+      --card:#1f2948;
+      --radius:18px;
+      --shadow:0 30px 60px -10px rgba(0,0,0,0.55);
+      --gradient-accent:linear-gradient(135deg,#7c5aff,#ff75b5);
+      --text:#eef2fc;
+      --muted:#8fa5c1;
+      --transition:.35s cubic-bezier(.4,.2,.2,1);
+      --focus:#a6f0ff;
+      font-family: 'Inter', system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    }
+    *{box-sizing:border-box;}
+    body {
+      margin:0;
+      min-height:100vh;
+      background: radial-gradient(ellipse at 30% 30%, #1b2242 0%, #0f111f 70%);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      overflow-x:hidden;
+      position:relative;
+    }
+    /* canvas particles */
+    #tsparticles {
+      position:fixed;
+      inset:0;
+      z-index:0;
+      pointer-events:none;
+    }
+    .app {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 1rem 1rem 5rem;
+      position: relative;
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+      z-index:1;
+    }
+    .header {
+      display:flex;
+      justify-content: space-between;
+      align-items:flex-start;
+      flex-wrap:wrap;
+      gap:12px;
+      margin-bottom:4px;
+      position:relative;
+    }
+    .title-block {
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    h1 {
+      margin:0;
+      font-size:2rem;
+      line-height:1.1;
+    }
+    .subtitle {
+      margin:0;
+      font-size:.9rem;
+      color: var(--muted);
+    }
+    .progress-wrapper {
+      flex:1;
+      min-width:260px;
+      margin-left:10px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .progress-bar {
+      background: rgba(255,255,255,0.07);
+      border-radius:999px;
+      overflow:hidden;
+      height:14px;
+      position: relative;
+    }
+    .progress-inner {
+      height:100%;
+      width:0;
+      background: #ad7eff;
+      border-radius:999px;
+      transform-origin:left center;
+      transition: width .45s ease-out;
+      box-shadow:0 10px 40px -5px rgba(173,126,255,.7);
+    }
+    .progress-label {
+      font-size:.55rem;
+      letter-spacing:1px;
+      text-transform:uppercase;
+      display:flex;
+      justify-content:space-between;
+    }
+    .slider-wrapper {
+      position: relative;
+      overflow:hidden;
+      flex:1;
+      margin-top:4px;
+    }
+    .slide-container {
+      display:flex;
+      gap:40px;
+      position:relative;
+      width:100%;
+      will-change:transform;
+    }
+    .slide {
+      flex:0 0 100%;
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      padding:28px 32px 80px; /* espacio abajo por nav sticky */
+      border-radius:20px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      min-height:480px;
+      position:relative;
+    }
+    .question-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-bottom:12px;
+    }
+    .q-number {
+      background: rgba(255,255,255,0.07);
+      padding:6px 16px;
+      border-radius:999px;
+      font-weight:600;
+      font-size:.75rem;
+      letter-spacing:1px;
+    }
+    .q-text {
+      flex:1;
+      margin-left:12px;
+      font-size:1.25rem;
+      font-weight:600;
+      line-height:1.2;
+    }
+    .likert-grid {
+      display:grid;
+      grid-template-columns:repeat(7,1fr);
+      gap:14px;
+      margin-top:18px;
+    }
+    .likert-option {
+      position:relative;
+      cursor:pointer;
+      border-radius:14px;
+      padding:14px 6px;
+      text-align:center;
+      font-size:.9rem;
+      background: rgba(255,255,255,0.03);
+      transition: .3s cubic-bezier(.4,.2,.2,1);
+      border:2px solid transparent;
+      user-select:none;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      font-weight:600;
+    }
+    .likert-option.selected {
+      background: #6f55ff;
+      box-shadow:0 16px 50px -10px rgba(111,85,255,.7);
+      border:2px solid rgba(255,117,181,.9);
+      color:#fff;
+      transform:scale(1.03);
+    }
+    .scale-labels {
+      display:flex;
+      justify-content:space-between;
+      margin-top:6px;
+      font-size:.65rem;
+      color: var(--muted);
+    }
+    .sticky-nav {
+      position:sticky;
+      bottom:12px;
+      background: rgba(31,41,72,.9);
+      padding:16px 20px;
+      border-radius:16px;
+      display:flex;
+      gap:12px;
+      justify-content:space-between;
+      align-items:center;
+      margin-top:12px;
+      backdrop-filter: blur(10px);
+      box-shadow:0 25px 70px -10px rgba(0,0,0,.5);
+      flex-wrap:wrap;
+    }
+    .btn {
+      padding:14px 24px;
+      border:none;
+      outline:none;
+      cursor:pointer;
+      border-radius:999px;
+      font-weight:600;
+      font-size:1rem;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      background: var(--gradient-accent);
+      color:#fff;
+      position:relative;
+      overflow:hidden;
+      transition: var(--transition);
+      box-shadow:0 20px 60px -10px rgba(124,90,255,.6);
+    }
+    .btn-light {
+      background: rgba(255,255,255,0.08);
+      color:#cbd4ff;
+      font-weight:500;
+    }
+    .btn:disabled {
+      opacity:.4;
+      cursor:not-allowed;
+      filter: grayscale(.3);
+    }
+    .btn svg {
+      width:18px;
+      height:18px;
+    }
+    .dots-mini {
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .dot {
+      width:11px;
+      height:11px;
+      border-radius:50%;
+      background: rgba(255,255,255,0.08);
+      transition: .25s ease;
+      position:relative;
+    }
+    .dot.active {
+      background: #ff75b5;
+      box-shadow:0 0 16px rgba(255,117,181,.75);
+    }
+    .results-wrapper {
+      display:none;
+      flex-direction:column;
+      gap:18px;
+      margin-top:4px;
+    }
+    .results-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:12px;
+    }
+    .score-cards {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:18px;
+      margin-top:8px;
+    }
+    .trait-card {
+      background: linear-gradient(135deg,#1f2948 0%, #11183d 80%);
+      border-radius:16px;
+      padding:18px 20px;
+      position:relative;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,0.02);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      box-shadow:0 30px 80px -15px rgba(124,90,255,.5);
+    }
+    .trait-title {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-weight:700;
+      font-size:1rem;
+      gap:6px;
+    }
+    .trait-score {
+      font-size:1.6rem;
+      font-weight:700;
+    }
+    .tag {
+      padding:8px 16px;
+      border-radius:999px;
+      font-size:.6rem;
+      letter-spacing:1px;
+      display:inline-block;
+      margin-top:4px;
+      font-weight:600;
+    }
+    .interpretation {
+      font-size:.8rem;
+      margin-top:4px;
+      line-height:1.3;
+    }
+    .footer {
+      margin-top:40px;
+      text-align:center;
+      font-size:.65rem;
+      color: var(--muted);
+    }
+    /* reduce motion */
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div id="tsparticles"></div>
+  <div class="app" aria-label="Test de personalidad TIPI avanzado">
+    <div class="header">
+      <div class="title-block">
+        <div class="q-number" style="font-size:.85rem;">TIPI – Big Five</div>
+        <h1>Test rápido de personalidad</h1>
+        <div class="subtitle">10 preguntas. Escala Likert 1–7. Una pregunta por pantalla con animaciones profesionales.</div>
+      </div>
+      <div class="progress-wrapper" aria-label="Progreso del test">
+        <div class="progress-bar" aria-hidden="true">
+          <div class="progress-inner" id="progressInner"></div>
+        </div>
+        <div class="progress-label">
+          <div id="progressText">Pregunta 1 de 10</div>
+          <div class="dots-mini" aria-hidden="true" id="dots"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slider-wrapper">
+      <div class="slide-container" id="slides"></div>
+    </div>
+
+    <!-- sticky nav para que nunca se oculte -->
+    <div class="sticky-nav" aria-label="Navegación del test" id="stickyNav">
+      <div>
+        <button class="btn btn-light" id="prevGlobal" aria-label="Anterior" disabled>
+          ← Anterior
+        </button>
+      </div>
+      <div style="flex:1; text-align:center; font-size:.9rem; color: #c0cfee;" id="hintText">
+        Selecciona una respuesta para avanzar.
+      </div>
+      <div>
+        <button class="btn" id="nextGlobal" aria-label="Siguiente" disabled>
+          Siguiente →
+        </button>
+      </div>
+    </div>
+
+    <div class="results-wrapper" id="resultSection" aria-label="Resultados de personalidad">
+      <div class="results-header">
+        <div>
+          <h2 style="margin:0;">Tu perfil de personalidad</h2>
+          <div class="small" style="color:var(--muted);">Puntuaciones 1 (bajo) a 7 (alto); interpretación heurística.</div>
+        </div>
+        <div>
+          <button class="btn" id="retryBtn" aria-label="Reiniciar test">Reiniciar</button>
+        </div>
+      </div>
+      <div class="score-cards" id="traitsContainer"></div>
+      <div class="footer">
+        Basado en TIPI y el modelo Big Five. Gosling, Rentfrow & Swann (2003). Interpretaciones heurísticas para retroalimentación rápida.
+      </div>
+    </div>
+  </div>
+
+  <!-- dependencias -->
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tsparticles-engine@3/tsparticles.engine.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tsparticles@3/tsparticles.bundle.min.js"></script> -->
+
+  <script src="./js/gsap.min.js"></script>
+  <script src="./js/tsparticles.bundle.min.js"></script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log("Service Worker registrado correctamente"))
+      .catch(err => console.warn("Falló registro de SW:", err));
+  }
+</script>
+
+
+  <script>
+    // inicialización de partículas ligeras
+    tsParticles.load("tsparticles", {
+      fpsLimit: 60,
+      background: { color: { value: "rgba(15,17,31,0)" } },
+      particles: {
+        number: { value: 60, density: { enable: true, area: 800 } },
+        color: { value: ["#7c5aff", "#ff75b5", "#6fd1ff"] },
+        shape: { type: "circle" },
+        opacity: { value: 0.18, random: { enable: true, minimumValue: 0.05 } },
+        size: { value: { min: 2, max: 6 } },
+        move: {
+          enable: true,
+          speed: 0.7,
+          direction: "none",
+          random: true,
+          outModes: { default: "out" }
+        },
+        links: {
+          enable: true,
+          distance: 120,
+          color: "#7c5aff",
+          opacity: 0.1,
+          width: 1
+        }
+      },
+      interactivity: {
+        events: {
+          onHover: { enable: true, mode: "connect" },
+          onClick: { enable: false }
+        },
+        modes: {
+          connect: { distance: 120, radius: 60 }
+        }
+      },
+      detectRetina: true
+    });
+  </script>
+
+  <script>
+    // --- datos TIPI ---
+    const items = [
+      { id: 1, text: "Extrovertido, entusiasta." },
+      { id: 2, text: "Crítico, discutidor." },
+      { id: 3, text: "Responsable, autodisciplinado." },
+      { id: 4, text: "Ansioso, fácilmente alterado." },
+      { id: 5, text: "Abierto a nuevas experiencias, complejo." },
+      { id: 6, text: "Reservado, callado." },
+      { id: 7, text: "Simpático, cálido." },
+      { id: 8, text: "Desorganizado, descuidado." },
+      { id: 9, text: "Tranquilo, emocionalmente estable." },
+      { id: 10, text: "Convencional, poco creativo." }
+    ];
+
+    const traitMap = {
+      extraversion: { name: "Extraversión", pair: [1, 6], reverse: [6] },
+      agreeableness: { name: "Amabilidad", pair: [2, 7], reverse: [2] },
+      conscientiousness: { name: "Responsabilidad", pair: [3, 8], reverse: [8] },
+      emotional_stability: { name: "Estabilidad emocional", pair: [4, 9], reverse: [4] },
+      openness: { name: "Apertura", pair: [5, 10], reverse: [10] }
+    };
+
+    // estado
+    let answers = {};
+    let currentIndex = 0;
+
+    // referencias DOM
+    const slidesContainer = document.getElementById("slides");
+    const progressInner = document.getElementById("progressInner");
+    const progressText = document.getElementById("progressText");
+    const dotsContainer = document.getElementById("dots");
+    const resultSection = document.getElementById("resultSection");
+    const traitsContainer = document.getElementById("traitsContainer");
+    const prevGlobal = document.getElementById("prevGlobal");
+    const nextGlobal = document.getElementById("nextGlobal");
+    const hintText = document.getElementById("hintText");
+    const retryBtn = document.getElementById("retryBtn");
+
+    const slideGap = 40; // debe coincidir con CSS gap
+
+    // utilitarios
+    function reverse(v){ return 8 - v; }
+
+    function computeScores(responses) {
+      const result = {};
+      for (const key in traitMap) {
+        const info = traitMap[key];
+        let a = parseInt(responses[info.pair[0]]);
+        let b = parseInt(responses[info.pair[1]]);
+        if (info.reverse.includes(info.pair[0])) a = reverse(a);
+        if (info.reverse.includes(info.pair[1])) b = reverse(b);
+        result[key] = ((a + b) / 2);
+      }
+      return result;
+    }
+
+    function categorize(score) {
+      if (score >= 5.5) return { label: "Alto", color: "#10b981" };
+      if (score <= 2.5) return { label: "Bajo", color: "#f87171" };
+      return { label: "Moderado", color: "#fbbf24" };
+    }
+
+    function getTraitDescription(key, score) {
+      const highLow = score >= 5.5 ? "Alto" : score <= 2.5 ? "Bajo" : "Moderado";
+      const descriptions = {
+        extraversion: {
+          Alto: "Busca la interacción social, energético y asertivo.",
+          Moderado: "Equilibrado entre sociabilidad y reflexión.",
+          Bajo: "Reservado, prefiere tranquilidad."
+        },
+        agreeableness: {
+          Alto: "Cooperativo y empático.",
+          Moderado: "Flexible, se adapta.",
+          Bajo: "Crítico y escéptico."
+        },
+        conscientiousness: {
+          Alto: "Organizado y responsable.",
+          Moderado: "Parcialmente estructurado.",
+          Bajo: "Espontáneo, menos planificado."
+        },
+        emotional_stability: {
+          Alto: "Calmado frente al estrés.",
+          Moderado: "Reacciona pero se recupera.",
+          Bajo: "Propenso a ansiedad."
+        },
+        openness: {
+          Alto: "Curioso y creativo.",
+          Moderado: "Acepta cambios con cautela.",
+          Bajo: "Prefiere la tradición."
+        }
+      };
+      return descriptions[key][highLow] || "";
+    }
+
+    // construcción
+    function buildDots() {
+      for (let i = 0; i < items.length; i++) {
+        const d = document.createElement("div");
+        d.className = "dot" + (i === 0 ? " active" : "");
+        dotsContainer.appendChild(d);
+      }
+    }
+
+    function buildSlides() {
+      items.forEach((item, idx) => {
+        const slide = document.createElement("div");
+        slide.className = "slide";
+        slide.setAttribute("data-index", idx);
+        slide.setAttribute("aria-label", `Pregunta ${idx+1}`);
+        slide.innerHTML = `
+          <div class="question-header">
+            <div class="q-number">Pregunta ${idx+1} de ${items.length}</div>
+            <div class="q-text">${item.text}</div>
+          </div>
+          <div class="likert-grid" aria-label="Opciones de escala Likert para pregunta ${idx+1}">
+            ${[1,2,3,4,5,6,7].map(v => `
+              <div class="likert-option" data-value="${v}" data-item="${item.id}" role="radio" aria-checked="false" tabindex="0">
+                ${v}
+              </div>`).join("")}
+          </div>
+          <div class="scale-labels">
+            <div>En desacuerdo fuerte</div>
+            <div>Neutral</div>
+            <div>De acuerdo fuerte</div>
+          </div>
+        `;
+        slidesContainer.appendChild(slide);
+      });
+    }
+
+    function updateProgress() {
+      const total = items.length;
+      progressInner.style.width = `${Math.min(100, ((currentIndex+1)/total*100))}%`;
+      progressText.textContent = `Pregunta ${currentIndex+1} de ${total}`;
+      Array.from(dotsContainer.children).forEach((d,i)=>{
+        d.classList.toggle("active", i === currentIndex);
+      });
+      // botones globales
+      prevGlobal.disabled = currentIndex === 0;
+      // habilitar siguiente solo si hay respuesta
+      nextGlobal.disabled = !answers[ items[currentIndex].id ];
+    }
+
+    function goTo(index) {
+      const slider = document.querySelector(".slider-wrapper");
+      const slideWidth = slider.clientWidth;
+      currentIndex = Math.max(0, Math.min(items.length -1, index));
+      const offset = -currentIndex * (slideWidth + slideGap);
+      if (typeof gsap !== 'undefined') {
+        gsap.to(slidesContainer, { x: offset, duration: .55, ease: "power3.out" });
+      } else {
+        slidesContainer.style.transform = `translateX(${offset}px)`;
+      }
+      updateProgress();
+      // foco
+      const currentSlide = slidesContainer.querySelector(`.slide[data-index="${currentIndex}"]`);
+      setTimeout(()=> {
+        const selected = currentSlide.querySelector(".likert-option.selected");
+        if (selected) selected.focus();
+        else {
+          const first = currentSlide.querySelector(".likert-option");
+          if (first) first.focus();
+        }
+      }, 300);
+    }
+
+    function showResults() {
+      const scores = computeScores(answers);
+      traitsContainer.innerHTML = "";
+      for (const key in scores) {
+        const score = Number(scores[key].toFixed(2));
+        const category = categorize(score);
+        const traitInfo = traitMap[key];
+        const card = document.createElement("div");
+        card.className = "trait-card";
+        card.innerHTML = `
+          <div class="trait-title">
+            <div>${traitInfo.name}</div>
+            <div class="trait-score">${score.toFixed(2)}</div>
+          </div>
+          <div class="tag" style="background:${category.color}22;color:${category.color};">${category.label}</div>
+          <div class="interpretation">${getTraitDescription(key, score)}</div>
+        `;
+        traitsContainer.appendChild(card);
+        if (typeof gsap !== 'undefined') {
+          gsap.from(card, { opacity:0, y:25, duration:.5, delay: 0.15 + (Object.keys(traitMap).indexOf(key) * 0.12), ease:"power2.out" });
+        }
+      }
+      resultSection.style.display = "flex";
+      // scroll
+      setTimeout(()=> {
+        resultSection.scrollIntoView({ behavior: "smooth" });
+      }, 200);
+    }
+
+    function resetAll() {
+      answers = {};
+      currentIndex = 0;
+      slidesContainer.querySelectorAll(".likert-option").forEach(o=>{
+        o.classList.remove("selected");
+        o.setAttribute("aria-checked","false");
+      });
+      updateProgress();
+      resultSection.style.display = "none";
+      goTo(0);
+    }
+
+    function attachListeners() {
+      // selección de opción
+      slidesContainer.addEventListener("click", (e) => {
+        const option = e.target.closest(".likert-option");
+        if (!option) return;
+        const val = Number(option.dataset.value);
+        const item = Number(option.dataset.item);
+        answers[item] = val;
+        const parent = option.parentElement;
+        parent.querySelectorAll(".likert-option").forEach(o=>{
+          o.classList.remove("selected");
+          o.setAttribute("aria-checked","false");
+        });
+        option.classList.add("selected");
+        option.setAttribute("aria-checked","true");
+        // actualizar hint y activar siguiente
+        hintText.textContent = "Respuesta registrada. Avanza cuando quieras.";
+        updateProgress();
+      });
+
+      // navegación global
+      prevGlobal.addEventListener("click", () => {
+        if (currentIndex > 0) goTo(currentIndex -1);
+      });
+      nextGlobal.addEventListener("click", () => {
+        if (answers[ items[currentIndex].id ]) {
+          if (currentIndex === items.length -1) {
+            showResults();
+          } else {
+            goTo(currentIndex +1);
+          }
+        }
+      });
+
+      // teclado
+      slidesContainer.addEventListener("keydown", (e) => {
+        const option = e.target.closest(".likert-option");
+        if (!option) return;
+        if (e.key === "Enter" || e.key === " ") {
+          option.click();
+          e.preventDefault();
+        }
+        if (e.key === "ArrowRight") {
+          if (!nextGlobal.disabled) nextGlobal.click();
+        }
+        if (e.key === "ArrowLeft") {
+          if (!prevGlobal.disabled) prevGlobal.click();
+        }
+      });
+
+      retryBtn.addEventListener("click", resetAll);
+    }
+
+    function init() {
+      buildDots();
+      buildSlides();
+      attachListeners();
+      updateProgress();
+      goTo(0);
+      if (typeof gsap !== 'undefined') {
+        gsap.from(".slide", { opacity:0, y:40, duration:.8, stagger:.07, ease:"power3.out" });
+        gsap.to(".progress-inner", { scaleX:1, duration:1.2, ease:"elastic.out(1,0.6)" });
+      }
+      // pequeño pulso en progress bar como vida
+      setInterval(() => {
+        if (typeof gsap !== 'undefined') {
+          gsap.to(".progress-inner", { boxShadow: "0 14px 60px -5px rgba(173,126,255,.9)", duration: .6, yoyo:true, repeat:1, ease:"sine.inOut" });
+        }
+      }, 4000);
+    }
+
+    window.addEventListener("resize", () => {
+      goTo(currentIndex);
+    });
+
+    init();
+  </script>
+</body>
+</html>

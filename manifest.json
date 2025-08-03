@@ -1,0 +1,20 @@
+{
+  "name": "Test de Personalidad TIPI",
+  "short_name": "TIPI",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0f111f",
+  "theme_color": "#6f55ff",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
